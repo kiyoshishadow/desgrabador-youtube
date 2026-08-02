@@ -1,79 +1,76 @@
 from yt_dlp import YoutubeDL
 import glob
-import re
 import os
+import re
 import tempfile
 
-def seconds_from_time_stamp(timestamp):
-  # Convierte un timestamp a segundos
-  minutes = int(timestamp[3:5])
-  seconds = int(timestamp[6:8])
-  return minutes*60 + seconds
 
-def is_timestamp(l):
-  # Verifica que un string sea un timestamp
-  return l[:2].isdigit() and l[2] == ':'
+def seconds_from_time_stamp(timestamp):
+    """Convierte un timestamp WebVTT (MM:SS o HH:MM:SS) a segundos."""
+    parts = timestamp.strip().split(':')
+    if len(parts) == 2:
+        minutes, seconds = parts
+        hours = 0
+    else:
+        hours, minutes, seconds = parts
+    return int(hours) * 3600 + int(minutes) * 60 + int(float(seconds))
+
+
+def is_timestamp(line):
+    """Identifica una línea de tiempo WebVTT."""
+    return bool(re.match(r'^\s*(?:\d{2}:)?\d{2}:\d{2}[.,]\d{3}\s+-->', line))
+
 
 def has_letters(line):
-  # Verifica si un string tiene letras
-  return re.search('[a-zA-Z]', line)
+    return re.search('[a-zA-Z]', line)
+
 
 def has_no_text(line):
-  # Verifica si un string no tiene texto
-  l = line.strip()
-  return not len(l) or l.isdigit() or is_timestamp(l) or (l[0] == '(' and l[-1] == ')') or '[' in l or '{' in l or not has_letters(line)
+    line = line.strip()
+    return not line or line.isdigit() or (line[0] == '(' and line[-1] == ')') or '[' in line or '{' in line or not has_letters(line)
+
 
 def has_text(line):
-  # Verifica si un string tiene textos
-  return not has_no_text(line)
+    return not has_no_text(line)
+
 
 def clean_up(lines):
-  # Esta función limpia el contenido del archivo .srt
-  text_with_stamps = []
-  for i in range(0,len(lines)-2):
-    line = lines[i]
-    next_line = lines[i+1]
-    next_next_line = lines[i+2]
-    if is_timestamp(line) and has_text(next_next_line):
-      text_with_stamps.append({'text':next_next_line,'timestamp':seconds_from_time_stamp(line)})
+    """Extrae cues de VTT sin asumir una posición fija para el texto."""
+    text_with_stamps = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not is_timestamp(line):
+            index += 1
+            continue
 
-  return text_with_stamps
+        timestamp = seconds_from_time_stamp(line.split('-->', 1)[0])
+        index += 1
+        cue_lines = []
+        while index < len(lines) and lines[index].strip():
+            cleaned = re.sub(r'<[^>]*>', '', lines[index]).strip()
+            if cleaned and has_text(cleaned):
+                cue_lines.append(cleaned)
+            index += 1
 
-def convertContent(fileContents):
-  # Convierte el texto de un archivo vtt 
-  replacement = re.sub(r'([\d]+)\.([\d]+)', r'\1,\2', fileContents)
-  replacement = re.sub(r'<[^>]*>', '', replacement)
-  replacement = re.sub(r'WEBVTT\n\n', '', replacement)
-  replacement = re.sub(r'^\d+\n', '', replacement)
-  replacement = re.sub(r'\n\d+\n', '\n', replacement)
+        text = ' '.join(cue_lines)
+        if text:
+            text_with_stamps.append({'text': text, 'timestamp': timestamp})
+    return text_with_stamps
 
-  return replacement
 
-def extract_text_from_vtt(directory, title=""):
-    VTT_FILES = glob.glob(os.path.join(directory, "*.vtt"))
-    
-    text = []
-     # Para cada archivo de subtitulos descargado
-    for filename in VTT_FILES:
+def extract_text_from_vtt(directory, title=''):
+    subtitles = []
+    for filename in glob.glob(os.path.join(directory, '*.vtt')):
         with open(filename, 'r', encoding='utf-8') as vtt_file:
-            print("Tagging elements in file " + filename)
-            # Extraigo texto
-            content = convertContent(vtt_file.read())
-            lines = content.split("\n")
-            # Lo limpio y guardo cada frase con su timestamp
-            text_with_stamps = clean_up(lines)
-            #Guardo los subtitulos
-            text.append({'text_with_stamps':text_with_stamps,'title':title})
-            vtt_file.close()
-            # Borro el archivo
-            os.remove(filename)
+            cues = clean_up(vtt_file.read().splitlines())
+        if cues:
+            subtitles.append({'text_with_stamps': cues, 'title': title})
+    return subtitles
 
-    return text
 
-def get_subtitles(url, lang="es"):
-    # Cada solicitud usa un directorio temporal propio. En un servidor web pueden
-    # llegar varias solicitudes a la vez, por lo que usar el directorio actual
-    # haría que un usuario pudiera leer o borrar los subtítulos de otro.
+def get_subtitles(url, lang='es'):
+    """Descarga únicamente los subtítulos WebVTT del video solicitado."""
     with tempfile.TemporaryDirectory(prefix='youtube-subs-') as directory:
         ydl_opts = {
             'skip_download': True,
@@ -81,19 +78,14 @@ def get_subtitles(url, lang="es"):
             'writesubtitles': True,
             'writeautomaticsub': True,
             'subtitlesformat': 'vtt',
-            'playliststart': 1,
-            'playlistend': 3,
+            'noplaylist': True,
+            # curl_cffi (de requirements) permite a yt-dlp impersonar Chrome
+            # y evita los HTTP 429 de los endpoints de subtítulos de YouTube.
+            'impersonate': 'chrome',
             'outtmpl': os.path.join(directory, '%(title)s [%(id)s].%(ext)s'),
         }
-
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
 
         title = (info or {}).get('title', '')
         return extract_text_from_vtt(directory, title)
-
-
-
-if __name__=="__main__":
-    text = get_subtitles('https://www.youtube.com/watch?v=tmG4jwwhHTQ')
-    import pdb; pdb.set_trace()
