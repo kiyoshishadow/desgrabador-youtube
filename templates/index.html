@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-18832053-1', 'auto');
+    ga('send', 'pageview');
+  </script>
+  <link rel="icon" type="image/png" href="../static/img/favicon.png">
+  <title>kiyoshishadow</title>
+
+  <style>
+    :root{
+      --sky-1: #241730;
+      --sky-2: #362448;
+      --chrome: #3c2c56;
+      --chrome-dark: #1c1228;
+      --chrome-mid: #6b4f92;
+      --neon-green: #baffc9;
+      --neon-green-soft: #8fe0a3;
+      --accent-lilac: #c9a6f0;
+      --ink: #ece3fb;
+      --ink-soft: #b6a4d6;
+      --paper: #2a1e3d;
+      --line: #6a5590;
+      --edge-light: #7a5fa8;
+      --edge-dark: #150d20;
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      font-family:'Space Mono', monospace;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(14, 9, 26, 0.48), rgba(22, 13, 35, 0.76)),
+        url('/static/img/lofi-night-desktop.png') center top / cover fixed,
+        linear-gradient(180deg, var(--sky-1), var(--sky-2));
+      background-attachment: fixed;
+      padding: 28px 16px clamp(112px, 11vw, 146px);
+      overflow-x:hidden;
+    }
+    body::before, body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+    }
+    body::before{
+      z-index:0;
+      opacity:.52;
+      background:
+        radial-gradient(circle at 13% 16%, rgba(186,255,201,.8) 0 1px, transparent 2px),
+        radial-gradient(circle at 84% 24%, rgba(201,166,240,.85) 0 1px, transparent 2px),
+        radial-gradient(circle at 71% 66%, rgba(186,255,201,.65) 0 1px, transparent 2px),
+        radial-gradient(circle at 32% 78%, rgba(201,166,240,.7) 0 1px, transparent 2px);
+      background-size: 260px 240px, 330px 290px, 410px 360px, 490px 440px;
+      animation: star-drift 22s ease-in-out infinite alternate;
+    }
+    body::after{
+      z-index:2;
+      opacity:.16;
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,.11) 0 1px, transparent 1px 4px);
+      mix-blend-mode:soft-light;
+      animation: scanline-glide 8s linear infinite;
+    }
+    body > *{ position:relative; z-index:1; }
+    footer.desk-footer{ z-index:4; }
+    @keyframes star-drift{
+      from{ transform:translate3d(-8px,-5px,0); opacity:.35; }
+      to{ transform:translate3d(10px,8px,0); opacity:.66; }
+    }
+    @keyframes scanline-glide{ to{ background-position:0 48px; } }
+    @keyframes window-arrival{
+      from{ opacity:0; transform:translateY(14px) scale(.985); }
+      to{ opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    .pixel{
+      font-family:'Press Start 2P', monospace;
+      letter-spacing: .5px;
+    }
+
+    /* ---------- window chrome ---------- */
+    .win{
+      background: var(--chrome);
+      border-radius: 8px;
+      box-shadow:
+        inset 2px 2px 0 var(--edge-light),
+        inset -2px -2px 0 var(--edge-dark),
+        6px 6px 0 rgba(0,0,0,0.35);
+      margin: 0 auto 28px;
+      max-width: 900px;
+      overflow: hidden;
+      animation: window-arrival .62s cubic-bezier(.2,.8,.2,1) both;
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .win:nth-of-type(2){ animation-delay:.08s; }
+    .win:nth-of-type(3){ animation-delay:.16s; }
+    .win:hover{
+      transform:translateY(-3px);
+      box-shadow: inset 2px 2px 0 var(--edge-light), inset -2px -2px 0 var(--edge-dark), 9px 11px 0 rgba(0,0,0,.42), 0 0 22px rgba(186,255,201,.10);
+    }
+    .win-titlebar{
+      background: linear-gradient(90deg, var(--chrome-dark), var(--chrome-mid));
+      color: var(--neon-green);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+    .win-titlebar .name{ display:flex; align-items:center; gap:8px; }
+    .win-dots{ display:flex; gap:6px; }
+    .win-dots span{
+      width:11px; height:11px; border-radius:50%;
+      display:inline-block;
+      background: var(--neon-green);
+      box-shadow: inset -1px -1px 0 rgba(0,0,0,.35);
+    }
+    .win-dots span:nth-child(2){ background: var(--accent-lilac); }
+    .win-dots span:nth-child(3){ background: #f5a6c9; }
+    .win-controls{ display:flex; gap:5px; }
+    .win-controls span{
+      width:18px; height:16px;
+      background: var(--chrome);
+      border-radius:2px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px;
+      color: var(--neon-green);
+      box-shadow: inset 1px 1px 0 var(--edge-light), inset -1px -1px 0 var(--edge-dark);
+    }
+    .win-body{ padding: 26px 28px; background: var(--chrome); }
+
+    /* ---------- brand header ---------- */
+    .brand-strip{
+      max-width: 900px;
+      margin: 0 auto 14px;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+    }
+    .moon-badge{
+      width: 44px; height: 44px; flex-shrink:0;
+      object-fit:contain; image-rendering:pixelated;
+      filter:drop-shadow(0 0 7px rgba(186,255,201,.34));
+      animation: logo-drift 5s ease-in-out infinite;
+    }
+    @keyframes logo-drift{ 50%{ transform:translateY(-3px) rotate(-2deg); filter:drop-shadow(0 0 12px rgba(186,255,201,.58)); } }
+    .brand-name{
+      font-size: 15px;
+      color: var(--neon-green);
+      text-shadow: 0 0 8px rgba(186,255,201,0.5);
+      animation: neon-breathe 3.4s ease-in-out infinite;
+    }
+    @keyframes neon-breathe{
+      50%{ text-shadow:0 0 4px rgba(186,255,201,.5), 0 0 18px rgba(186,255,201,.55); }
+    }
+
+    /* ---------- hero ---------- */
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1fr 190px;
+      gap: 24px;
+      align-items:center;
+    }
+    .hero-eyebrow{ font-size: 10px; color: var(--ink-soft); margin: 0 0 10px; }
+    .hero-title{ font-size: 15px; line-height: 1.9; margin: 0 0 6px; color: var(--ink); }
+    .hero-sub{ color: var(--ink-soft); margin: 0 0 22px; font-size: 14px; }
+    .crt-frame{
+      background: var(--paper);
+      border-radius: 6px;
+      padding: 6px;
+      box-shadow: inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light);
+      animation: crt-hover 4.5s ease-in-out infinite;
+    }
+    @keyframes crt-hover{ 50%{ transform:translateY(-5px) rotate(.4deg); box-shadow:inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light), 0 0 20px rgba(186,255,201,.18); } }
+
+    /* ---------- input row ---------- */
+    .input-row{ display:flex; gap: 10px; flex-wrap: wrap; }
+    #url_input{
+      flex: 1 1 320px;
+      font-family:'Space Mono', monospace;
+      font-size: 13px;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 4px;
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light);
+    }
+    #url_input::placeholder{ color: #7d6ba3; }
+    #url_input:focus{ outline: 3px solid var(--neon-green); outline-offset: 1px; }
+    .mode-tabs{
+      display:flex;
+      gap: 8px;
+      margin: 0 0 16px;
+      border-bottom: 2px dashed var(--line);
+      padding-bottom: 12px;
+    }
+    .mode-tab{
+      font-family:'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--ink-soft);
+      background: var(--paper);
+      border: 0;
+      border-radius: 4px;
+      padding: 10px 12px;
+      cursor: pointer;
+      box-shadow: inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light);
+    }
+    .mode-tab:hover, .mode-tab.is-active{ color: var(--chrome-dark); background: var(--neon-green); }
+    .mode-tab:focus-visible{ outline: 3px solid var(--accent-lilac); outline-offset: 2px; }
+    .mode-panel[hidden]{ display:none; }
+    .batch-note{ color: var(--ink-soft); font-size: 12px; line-height: 1.6; margin: 0 0 10px; }
+    #batch_urls{
+      width:100%; min-height: 142px; resize: vertical;
+      font-family:'Space Mono', monospace; font-size: 13px; line-height: 1.6;
+      padding: 12px 14px; border: none; border-radius: 4px;
+      background: var(--paper); color: var(--ink);
+      box-shadow: inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light);
+    }
+    #batch_urls::placeholder{ color: #7d6ba3; }
+    #batch_urls:focus{ outline: 3px solid var(--neon-green); outline-offset: 1px; }
+    .batch-actions{ margin-top: 10px; display:flex; justify-content:flex-end; }
+    #batch_progress{ display:none; margin-top: 16px; }
+    .progress-title{ font-size: 11px; color: var(--ink-soft); margin: 0 0 8px; }
+    .progress-list{ margin:0; padding:0; list-style:none; display:grid; gap:8px; }
+    .progress-item{
+      display:flex; align-items:center; gap:10px; padding:10px;
+      background: var(--paper); border-left: 3px solid var(--line);
+      border-radius:4px; font-size:11px; overflow-wrap:anywhere;
+    }
+    .progress-item .status-mark{ width:17px; flex: 0 0 17px; text-align:center; color:var(--ink-soft); }
+    .progress-item.is-loading{ border-left-color:var(--neon-green); }
+    .progress-item.is-ready{ border-left-color:var(--neon-green); }
+    .progress-item.is-ready .status-mark{ color:var(--neon-green); }
+    .progress-item.is-error{ border-left-color:#f5a6c9; color:#f2c9dd; }
+    .progress-item.is-error .status-mark{ color:#f5a6c9; }
+    .loader-mini{ width:14px; height:14px; border-width:2px; }
+    .btn-pixel{
+      font-family:'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--chrome-dark);
+      background: var(--neon-green);
+      border: none;
+      border-radius: 4px;
+      padding: 13px 18px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 var(--chrome-dark);
+      transition: transform .08s ease;
+    }
+    .btn-pixel:hover{ background: var(--accent-lilac); }
+    .btn-pixel:active{ transform: translate(2px,2px); box-shadow: 0 0 0 var(--chrome-dark); }
+    .btn-pixel:focus-visible{ outline: 3px solid var(--neon-green); outline-offset: 2px; }
+    .btn-pixel:disabled, .mode-tab:disabled{ cursor:not-allowed; opacity:.55; }
+
+    /* ---------- status / error ---------- */
+    #status{ display:none; margin-top: 18px; align-items:center; gap: 12px; font-size: 12px; color: var(--ink-soft); }
+    .loader{
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 3px solid var(--chrome-mid);
+      border-top-color: var(--neon-green);
+      animation: spin 1s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+
+    #error{ display:none; margin-top: 16px; }
+    .alert-pixel{
+      background: #3a2140;
+      border-left: 4px solid #f5a6c9;
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #f2c9dd;
+    }
+
+    /* ---------- transcript window ---------- */
+    #video_sub{ display:none; }
+    .tape-strip{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 28px; background: var(--chrome);
+      border-top: 2px dashed var(--line);
+      flex-wrap: wrap; gap: 10px;
+    }
+    .result-actions{ display:flex; gap: 10px; flex-wrap:wrap; }
+    .result-actions[hidden]{ display:none; }
+    .tape-strip small{ color: var(--ink-soft); }
+    #title{ font-size: 15px; margin: 0 0 4px; color: var(--neon-green); }
+    #result-div{ padding: 0 28px 26px; }
+    #result{
+      background: var(--paper);
+      border-radius: 6px;
+      padding: 22px;
+      box-shadow: inset 2px 2px 0 var(--edge-dark), inset -2px -2px 0 var(--edge-light);
+      white-space: pre-line;
+      max-height: 480px;
+      overflow-y: auto;
+      line-height: 1.9;
+    }
+    .transcript-entry + .transcript-entry{
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 2px dashed var(--line);
+    }
+    .transcript-entry-title{
+      font-family:'Press Start 2P', monospace;
+      color: var(--neon-green);
+      font-size: 10px;
+      line-height: 1.8;
+      margin: 0 0 14px;
+    }
+    .transcript-entry-text{ margin:0; font-size:14px; }
+    /* ya no son links, son spans de texto plano */
+    #result span.frase_text{
+      color: var(--ink);
+      font-size: 14px;
+    }
+    #result span.frase_text:hover{ color: var(--neon-green); }
+
+    /* ---------- about window ---------- */
+    .about-body p{ font-size: 12.5px; line-height: 1.9; color: var(--ink-soft); margin: 0 0 14px; }
+    .about-body p:last-child{ margin-bottom: 0; }
+    .about-graphics{ display:flex; gap: 14px; margin-top: 16px; align-items:flex-end; }
+
+    /* ---------- living desk shelf ---------- */
+    .shelf-scene{
+      position:relative;
+      width:100%;
+      height:clamp(94px, 9.4vw, 124px);
+      pointer-events:none;
+    }
+    .shelf-scene::before{
+      content:'';
+      position:absolute;
+      left:44%; bottom:8%;
+      width:14%; height:58%;
+      background:radial-gradient(ellipse, rgba(255,184,130,.28), rgba(186,255,201,.08) 35%, transparent 69%);
+      filter:blur(8px);
+      animation:candle-glow 2.8s ease-in-out infinite;
+    }
+    .shelf-scene img{
+      position:relative;
+      display:block;
+      width:100%; height:100%;
+      object-fit:fill;
+      object-position:center;
+      image-rendering:pixelated;
+      image-rendering:crisp-edges;
+      filter:drop-shadow(0 -5px 14px rgba(11,7,18,.46));
+      animation:shelf-settle 6s ease-in-out infinite;
+    }
+    @keyframes candle-glow{ 50%{ transform:scale(1.16); opacity:.78; } }
+    @keyframes shelf-settle{ 50%{ transform:translateY(-2px); filter:drop-shadow(0 -8px 18px rgba(11,7,18,.58)); } }
+    @media (max-width: 640px){
+      .hero-grid{ grid-template-columns: 1fr; }
+      .crt-frame{ order:-1; max-width: 170px; margin: 0 auto; }
+      .shelf-scene{ height:94px; opacity:.94; }
+    }
+
+    /* ---------- full-width desk footer ---------- */
+    footer.desk-footer{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      width:100%;
+      margin:0;
+      isolation:isolate;
+      background:transparent;
+      color: var(--neon-green);
+      box-shadow:none;
+    }
+    .footer-meta{
+      position:absolute;
+      z-index:3;
+      left:0; right:0; bottom:0;
+      height:25px;
+      border:0;
+      background:rgba(10,6,16,.38);
+      text-shadow:0 0 8px rgba(186,255,201,.22);
+    }
+    .task-info{
+      position:absolute;
+      top:9px; left:50%;
+      transform:translateX(-50%);
+      white-space:nowrap;
+      font-family:'Press Start 2P', monospace;
+      font-size:9px;
+      color:var(--neon-green);
+    }
+    #clock{
+      position:absolute;
+      top:8px; right:20px;
+      font-family:'Press Start 2P', monospace;
+      font-size:10px;
+      color:var(--neon-green);
+    }
+    @media (max-width: 640px){
+      .footer-meta{ bottom:0; height:22px; }
+      .task-info{ top:7px; font-size:7px; }
+      #clock{ top:6px; right:10px; font-size:8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *, *::before, *::after{ animation: none !important; transition:none !important; scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="brand-strip">
+    <img class="moon-badge" src="/static/img/moon-cassette-logo.png" alt="Emblema de luna y casete">
+    <span class="brand-name pixel">kiyoshishadow</span>
+  </div>
+
+  <!-- MAIN WINDOW: FORM -->
+  <div class="win">
+    <div class="win-titlebar">
+      <div class="name">
+        <span class="win-dots"><span></span><span></span><span></span></span>
+        <span class="pixel">desgrabador.exe</span>
+      </div>
+      <div class="win-controls"><span>_</span><span>□</span><span>x</span></div>
+    </div>
+    <div class="win-body">
+      <div class="hero-grid">
+        <div>
+          <p class="hero-eyebrow pixel">☾ desgrabador automático</p>
+          <h1 class="hero-title pixel">¿Qué video<br>querés que<br>escuche por vos?</h1>
+          <p class="hero-sub">Extraigo subtítulos de YouTube por vos.</p>
+
+          <div class="mode-tabs" role="tablist" aria-label="Modo de transcripción">
+            <button class="mode-tab is-active" id="single-mode-tab" type="button" role="tab" aria-selected="true" aria-controls="single-mode-panel" onclick="setMode('single')">Un video</button>
+            <button class="mode-tab" id="batch-mode-tab" type="button" role="tab" aria-selected="false" aria-controls="batch-mode-panel" onclick="setMode('batch')">Varios videos</button>
+          </div>
+
+          <div id="single-mode-panel" class="mode-panel" role="tabpanel" aria-labelledby="single-mode-tab">
+            <div class="input-row">
+              <input id="url_input" placeholder="Pegá acá la dirección del video de YouTube que querés desgrabar" type="text" name="frase">
+              <button class="btn-pixel" id="single_submit" type="button" onclick="sendRequest()">Desgrabar</button>
+            </div>
+          </div>
+
+          <div id="batch-mode-panel" class="mode-panel" role="tabpanel" aria-labelledby="batch-mode-tab" hidden>
+            <p class="batch-note">Pegá un enlace de YouTube por línea. Los procesaré en orden para cuidar el servidor.</p>
+            <textarea id="batch_urls" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..." aria-label="Enlaces de YouTube, uno por línea"></textarea>
+            <div class="batch-actions">
+              <button class="btn-pixel" id="batch_submit" type="button" onclick="sendBatchRequest()">Desgrabar todo</button>
+            </div>
+          </div>
+
+          <div id="status">
+            <div class="loader"></div>
+            <span>Escuchando el video, en unos segundos termino...</span>
+          </div>
+
+          <div id="error">
+            <div class="alert-pixel">¡El video no pudo ser desgrabado! <strong>Verificá que la dirección ingresada sea correcta.</strong></div>
+          </div>
+
+          <div id="batch_progress" aria-live="polite">
+            <p class="progress-title pixel">Progreso del lote</p>
+            <ul id="batch_progress_list" class="progress-list"></ul>
+          </div>
+        </div>
+
+        <!-- CRT monitor ilustrado, gráfico propio en vez de foto -->
+        <div class="crt-frame">
+          <svg viewBox="0 0 160 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Monitor CRT mostrando el proceso de desgrabación">
+            <rect x="8" y="6" width="144" height="104" rx="6" fill="#160f22"/>
+            <rect x="16" y="14" width="128" height="88" rx="3" fill="#0c0816"/>
+            <rect x="20" y="18" width="120" height="80" fill="#12331f"/>
+            <text x="30" y="38" font-family="monospace" font-size="8" fill="#baffc9">&gt; escuchar</text>
+            <text x="30" y="52" font-family="monospace" font-size="8" fill="#8fe0a3">&gt; transcribir</text>
+            <text x="30" y="66" font-family="monospace" font-size="8" fill="#baffc9">&gt; buscar frase</text>
+            <text x="30" y="80" font-family="monospace" font-size="8" fill="#8fe0a3">&gt; listo</text>
+            <rect x="55" y="110" width="50" height="14" fill="#160f22"/>
+            <rect x="35" y="124" width="90" height="10" rx="2" fill="#1c1228"/>
+            <rect x="20" y="134" width="120" height="8" rx="2" fill="#160f22"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSCRIPT WINDOW -->
+  <div id="video_sub" class="win">
+    <div class="win-titlebar">
+      <div class="name">
+        <span class="win-dots"><span></span><span></span><span></span></span>
+        <span class="pixel">transcripcion.txt</span>
+      </div>
+      <div class="win-controls"><span>_</span><span>□</span><span>x</span></div>
+    </div>
+    <div class="win-body" style="padding-bottom:0;">
+      <h2 id="title">Título del video</h2>
+    </div>
+    <div class="tape-strip">
+      <small><i>Usá Ctrl+F para buscar en la transcripción.</i></small>
+      <div class="result-actions">
+        <button class="btn-pixel" type="button" onclick="copyToClipboard()">Copiar todo</button>
+        <button class="btn-pixel" id="download_pdf" type="button" onclick="downloadPdf()">Descargar PDF</button>
+      </div>
+    </div>
+    <div id="result-div">
+      <div id="result">a</div>
+    </div>
+  </div>
+
+  <!-- ABOUT WINDOW -->
+  <div class="win" id="footer">
+    <div class="win-titlebar">
+      <div class="name">
+        <span class="win-dots"><span></span><span></span><span></span></span>
+        <span class="pixel">info.txt</span>
+      </div>
+      <div class="win-controls"><span>_</span><span>□</span><span>x</span></div>
+    </div>
+    <div class="win-body about-body">
+      <p><b class="pixel" style="font-size:11px; color: var(--neon-green);">¿QUÉ ES ESTO?</b></p>
+      <p>Herramienta que desgraba automáticamente los videos de Youtube que tienen subtítulos automáticos, para ahorrarte el trabajo de transcribir a mano.</p>
+      <p>kiyoshishadow </p>
+
+      <div class="about-graphics" aria-hidden="true">
+        <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="23,4 30,20 46,23 30,26 23,42 16,26 0,23 16,20" fill="#c9a6f0" opacity="0.85"/>
+        </svg>
+        <svg width="30" height="46" viewBox="0 0 30 46" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="26" width="14" height="20" fill="#3a2c54"/>
+          <path d="M4 26 L26 26 L20 4 L10 4 Z" fill="#4a3a63"/>
+          <path d="M15 4 C 8 12, 6 20, 15 26 C 24 20, 22 12, 15 4 Z" fill="#8fe0a3"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <footer class="desk-footer">
+    <div class="footer-meta" aria-label="Información del sitio">
+      <span class="task-info">kiyoshishadow · © 2026</span>
+      <span id="clock" class="pixel">00:00</span>
+    </div>
+    <div class="shelf-scene" aria-hidden="true">
+      <img src="/static/img/lofi-shelf-footer-v3.png" alt="">
+    </div>
+  </footer>
+
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    var completedTranscripts = [];
+    var currentMode = 'single';
+
+    function setMode(mode) {
+      currentMode = mode;
+      var isBatch = mode === 'batch';
+      document.getElementById('single-mode-panel').hidden = isBatch;
+      document.getElementById('batch-mode-panel').hidden = !isBatch;
+      document.getElementById('single-mode-tab').classList.toggle('is-active', !isBatch);
+      document.getElementById('batch-mode-tab').classList.toggle('is-active', isBatch);
+      document.getElementById('single-mode-tab').setAttribute('aria-selected', String(!isBatch));
+      document.getElementById('batch-mode-tab').setAttribute('aria-selected', String(isBatch));
+      hideError();
+    }
+
+    function requestSubtitles(videoUrl) {
+      return new Promise(function (resolve, reject) {
+        if (!videoUrl) {
+          reject(new Error('Ingresá una dirección de YouTube.'));
+          return;
+        }
+        var xhttp = new XMLHttpRequest();
+        xhttp.open('GET', '/get_subs?url=' + encodeURIComponent(videoUrl), true);
+        xhttp.timeout = 120000;
+        xhttp.onreadystatechange = function () {
+          if (xhttp.readyState !== 4) return;
+          if (xhttp.status >= 200 && xhttp.status < 300) {
+            try {
+              var response = JSON.parse(xhttp.responseText);
+              if (!response.title || !Array.isArray(response.subtitles)) throw new Error('La respuesta no tiene el formato esperado.');
+              resolve(response);
+            } catch (error) {
+              reject(error);
+            }
+          } else {
+            reject(new Error('El video no pudo ser desgrabado.'));
+          }
+        };
+        xhttp.onerror = function () { reject(new Error('No se pudo conectar con el servidor.')); };
+        xhttp.ontimeout = function () { reject(new Error('La solicitud tardó demasiado.')); };
+        xhttp.send();
+      });
+    }
+
+    function transcriptText(transcript) {
+      return transcript.subtitles.map(function (subtitle) {
+        return String(subtitle.text || '').trim();
+      }).filter(Boolean).join(' ');
+    }
+
+    function renderResults(transcripts, isBatch) {
+      var result = document.getElementById('result');
+      result.innerHTML = '';
+      transcripts.forEach(function (transcript) {
+        var entry = document.createElement('section');
+        entry.className = 'transcript-entry';
+        if (isBatch) {
+          var heading = document.createElement('h3');
+          heading.className = 'transcript-entry-title';
+          heading.textContent = transcript.title;
+          entry.appendChild(heading);
+        }
+        var content = document.createElement('p');
+        content.className = 'transcript-entry-text frase_text';
+        content.textContent = transcriptText(transcript);
+        entry.appendChild(content);
+        result.appendChild(entry);
+      });
+    }
+
+    function showTranscriptWindow(title) {
+      document.getElementById('title').textContent = title;
+      document.getElementById('video_sub').style.display = 'block';
+      document.getElementById('video_sub').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function showError(message) {
+      document.querySelector('#error .alert-pixel').textContent = message || '¡El video no pudo ser desgrabado! Verificá que la dirección ingresada sea correcta.';
+      $('#error').css('display', 'block');
+    }
+
+    function hideError() { $('#error').css('display', 'none'); }
+
+    function sendRequest() {
+      var videoUrl = document.getElementById('url_input').value.trim();
+      hideError();
+      $('#status').css('display', 'flex');
+      document.getElementById('single_submit').disabled = true;
+      requestSubtitles(videoUrl).then(function (response) {
+        completedTranscripts = [response];
+        renderResults(completedTranscripts, false);
+        showTranscriptWindow(response.title);
+      }).catch(function (error) {
+        showError(error.message);
+      }).finally(function () {
+        $('#status').css('display', 'none');
+        document.getElementById('single_submit').disabled = false;
+      });
+    }
+
+    function setBatchProgress(index, state, label) {
+      var item = document.querySelector('#batch_progress_list [data-index="' + index + '"]');
+      if (!item) return;
+      item.className = 'progress-item is-' + state;
+      var mark = item.querySelector('.status-mark');
+      mark.innerHTML = '';
+      if (state === 'loading') {
+        var spinner = document.createElement('span');
+        spinner.className = 'loader loader-mini';
+        mark.appendChild(spinner);
+      } else {
+        mark.textContent = state === 'ready' ? '✓' : state === 'error' ? '!' : '·';
+      }
+      item.querySelector('.status-label').textContent = label;
+    }
+
+    function prepareBatchProgress(urls) {
+      var list = document.getElementById('batch_progress_list');
+      list.innerHTML = '';
+      urls.forEach(function (url, index) {
+        var item = document.createElement('li');
+        item.className = 'progress-item is-pending';
+        item.setAttribute('data-index', index);
+        item.innerHTML = '<span class="status-mark">·</span><span class="status-label"></span>';
+        item.querySelector('.status-label').textContent = 'Pendiente: ' + url;
+        list.appendChild(item);
+      });
+      document.getElementById('batch_progress').style.display = 'block';
+    }
+
+    async function sendBatchRequest() {
+      var urls = document.getElementById('batch_urls').value.split(/\r?\n/).map(function (url) { return url.trim(); }).filter(Boolean);
+      hideError();
+      if (!urls.length) {
+        showError('Pegá al menos un enlace de YouTube para procesar.');
+        return;
+      }
+      document.getElementById('batch_submit').disabled = true;
+      prepareBatchProgress(urls);
+      var successes = [];
+      for (var index = 0; index < urls.length; index++) {
+        setBatchProgress(index, 'loading', 'Cargando: ' + urls[index]);
+        try {
+          var response = await requestSubtitles(urls[index]);
+          successes.push(response);
+          setBatchProgress(index, 'ready', 'Listo: ' + response.title);
+        } catch (error) {
+          setBatchProgress(index, 'error', 'Error: ' + urls[index]);
+        }
+      }
+      document.getElementById('batch_submit').disabled = false;
+      if (successes.length) {
+        completedTranscripts = successes;
+        renderResults(completedTranscripts, true);
+        showTranscriptWindow('Transcripción múltiple · ' + successes.length + ' video' + (successes.length === 1 ? '' : 's'));
+      } else {
+        showError('No se pudo desgrabar ninguno de los enlaces ingresados.');
+      }
+    }
+
+    function copyToClipboard() {
+      var textarea = document.createElement('textarea');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      textarea.value = document.getElementById('result').innerText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('Texto copiado al portapapeles');
+    }
+
+    function downloadPdf() {
+      if (!completedTranscripts.length || !window.jspdf) {
+        showError('Todavía no hay una transcripción disponible para descargar.');
+        return;
+      }
+      var pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+      var pageWidth = pdf.internal.pageSize.getWidth();
+      var pageHeight = pdf.internal.pageSize.getHeight();
+      var margin = 48;
+      var maxWidth = pageWidth - margin * 2;
+      var y = margin;
+      function ensureSpace(height) {
+        if (y + height > pageHeight - margin) { pdf.addPage(); y = margin; }
+      }
+      completedTranscripts.forEach(function (transcript, index) {
+        var heading = (completedTranscripts.length > 1 ? 'VIDEO ' + (index + 1) + ': ' : '') + transcript.title;
+        pdf.setFont('courier', 'bold');
+        pdf.setFontSize(13);
+        var headingLines = pdf.splitTextToSize(heading, maxWidth);
+        ensureSpace(headingLines.length * 17 + 16);
+        pdf.text(headingLines, margin, y);
+        y += headingLines.length * 17 + 10;
+        pdf.setFont('courier', 'normal');
+        pdf.setFontSize(10);
+        var bodyLines = pdf.splitTextToSize(transcriptText(transcript), maxWidth);
+        bodyLines.forEach(function (line) {
+          ensureSpace(14);
+          pdf.text(line, margin, y);
+          y += 14;
+        });
+        y += 18;
+      });
+      pdf.save(completedTranscripts.length > 1 ? 'transcripciones-lote.pdf' : 'transcripcion.pdf');
+    }
+
+    function tickClock() {
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2, '0');
+      var mm = String(now.getMinutes()).padStart(2, '0');
+      var el = document.getElementById('clock');
+      if (el) el.textContent = hh + ':' + mm;
+    }
+    tickClock();
+    setInterval(tickClock, 15000);
+  </script>
+</body>
+
+</html>
