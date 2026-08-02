@@ -1,4 +1,5 @@
 from yt_dlp import YoutubeDL
+from yt_dlp.networking.impersonate import ImpersonateTarget
 import glob
 import os
 import re
@@ -81,7 +82,7 @@ def get_subtitles(url, lang='es'):
             'noplaylist': True,
             # curl_cffi (de requirements) permite a yt-dlp impersonar Chrome
             # y evita los HTTP 429 de los endpoints de subtítulos de YouTube.
-            'impersonate': 'chrome',
+            'impersonate': ImpersonateTarget(client='chrome'),
             'outtmpl': os.path.join(directory, '%(title)s [%(id)s].%(ext)s'),
         }
         with YoutubeDL(ydl_opts) as ydl:
