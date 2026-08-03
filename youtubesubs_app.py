@@ -18,6 +18,8 @@ def diagnostico():
         'curl_cffi': False,
         'yt_dlp': False,
         'po_token_provider': download_video.po_token_available(),
+        'deno': download_video._find_deno(),
+        'provider_scripts': download_video._provider_candidates(),
         'cookies_configuradas': bool(os.environ.get('YT_COOKIES')),
     }
     try:

@@ -21,21 +21,40 @@ _HEADERS = {
 _po_available = None
 
 
+def _provider_candidates():
+    """Rutas donde puede estar el proveedor de PO Tokens (bgutil).
+    En Render se instala en build dentro del repo (bgutil_server);
+    en local se puede apuntar con la ruta por defecto de ~/."""
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(repo_dir, 'bgutil_server'),
+        os.path.join(os.path.expanduser('~'), 'bgutil-ytdlp-pot-provider', 'server'),
+    ]
+    return [p for p in candidates
+            if os.path.isfile(os.path.join(p, 'src', 'generate_once.ts'))]
+
+
+def _find_deno():
+    found = shutil.which('deno')
+    if found:
+        return found
+    for candidate in (
+        '/opt/render/project/src/.deno/bin/deno',
+        os.path.join(os.path.expanduser('~'), '.deno', 'bin', 'deno'),
+        os.path.join(os.path.expanduser('~'), '.deno', 'bin', 'deno.exe'),
+    ):
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
 def po_token_available():
     """True si el proveedor de PO Tokens (bgutil + Deno) esta instalado.
     Es lo que permite esquivar el 'Sign in to confirm you're not a bot'
     que YouTube aplica a IPs de datacenter como las de Render."""
     global _po_available
     if _po_available is None:
-        _po_available = False
-        try:
-            deno = shutil.which('deno')
-            script = os.path.join(
-                os.path.expanduser('~'), 'bgutil-ytdlp-pot-provider',
-                'server', 'src', 'generate_once.ts')
-            _po_available = bool(deno) and os.path.isfile(script)
-        except Exception:
-            _po_available = False
+        _po_available = bool(_find_deno()) and bool(_provider_candidates())
         logger.debug('PO token provider disponible: %s', _po_available)
     return _po_available
 
@@ -190,6 +209,14 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
             'tv', 'android_vr', 'ios',
         ]}},
     }
+    # Si el proveedor de PO Tokens esta disponible, se lo decimos a yt-dlp
+    # de forma explicita (rutas absolutas, sin depender de HOME ni de PATH).
+    providers = _provider_candidates()
+    deno = _find_deno()
+    if providers and deno:
+        ydl_opts['js_runtimes'] = {'deno': {'path': deno}}
+        ydl_opts['extractor_args']['youtubepot-bgutilscript'] = {
+            'server_home': [providers[0]]}
     # Si curl_cffi esta instalado, imita a Chrome para evitar HTTP 429.
     # Si no esta instalado, funciona igual con la extraccion normal.
     if importlib.util.find_spec('curl_cffi') is not None:
