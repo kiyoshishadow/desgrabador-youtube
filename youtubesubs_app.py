@@ -1,11 +1,51 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 from flask import Flask, jsonify, make_response, render_template, request
 from flask_cors import cross_origin
 
 import download_video
 
 app = Flask(__name__)
+
+
+@app.route('/diagnostico')
+def diagnostico():
+    info = {
+        'commit': os.environ.get('RENDER_GIT_COMMIT', 'local'),
+        'python': sys.version.split()[0],
+        'youtube_transcript_api': False,
+        'curl_cffi': False,
+        'yt_dlp': False,
+    }
+    try:
+        import youtube_transcript_api
+        info['youtube_transcript_api'] = True
+    except ImportError:
+        pass
+    try:
+        import curl_cffi
+        info['curl_cffi'] = True
+    except ImportError:
+        pass
+    try:
+        import yt_dlp
+        info['yt_dlp'] = True
+    except ImportError:
+        pass
+
+    url = request.args.get('url')
+    if url:
+        transcript = download_video.get_transcript_api(url)
+        info['transcript_api_ok'] = bool(transcript)
+        info['transcript_frases'] = len(transcript['text_with_stamps']) if transcript else 0
+        if not transcript:
+            try:
+                download_video.get_subtitles_ytdlp(url)
+                info['ytdlp_ok'] = True
+            except Exception as exc:
+                info['ytdlp_error'] = type(exc).__name__ + ': ' + str(exc)[:200]
+    return jsonify(info)
 
 
 @app.errorhandler(404)
