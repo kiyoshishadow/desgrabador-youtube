@@ -2,5 +2,6 @@ Flask>=3.0,<4.0
 Flask-Cors>=4.0,<7.0
 gunicorn>=22.0,<24.0
 yt-dlp[default,curl-cffi]>=2025.1.15
+youtube-transcript-api>=1.0.0
 # yt-dlp 2026.7.4 aún no detecta los perfiles expuestos por curl_cffi 0.15.
 curl-cffi>=0.14,<0.15
