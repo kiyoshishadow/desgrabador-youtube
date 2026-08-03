@@ -6,7 +6,7 @@ services:
     buildCommand: |
       set -e
       pip install -r requirements.txt
-      curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/opt/render/project/src/.deno sh -s v2.3.0
+      curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/opt/render/project/src/.deno sh -s v2.9.4
       cd /opt/render/project/src/bgutil_server
       rm -f package-lock.json deno.lock
       /opt/render/project/src/.deno/bin/deno install
