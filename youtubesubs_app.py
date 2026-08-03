@@ -45,7 +45,14 @@ def diagnostico():
             info['subtitles_ok'] = bool(result)
             info['subtitles_frases'] = len(result[0]['text_with_stamps']) if result else 0
         except Exception as exc:
-            info['subtitles_error'] = type(exc).__name__ + ': ' + str(exc)[:300]
+            info['subtitles_error'] = type(exc).__name__ + ': ' + str(exc)[:500]
+        info['pot_test'] = download_video.test_po_token(url)
+        try:
+            r = download_video.get_subtitles_ytdlp(url)
+            info['ytdlp_ok'] = bool(r)
+            info['ytdlp_frases'] = len(r[0]['text_with_stamps']) if r else 0
+        except Exception as exc:
+            info['ytdlp_error'] = type(exc).__name__ + ': ' + str(exc)[:500]
     return jsonify(info)
 
 

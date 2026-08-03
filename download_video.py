@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import urllib.request
 
@@ -57,6 +58,39 @@ def po_token_available():
         _po_available = bool(_find_deno()) and bool(_provider_candidates())
         logger.debug('PO token provider disponible: %s', _po_available)
     return _po_available
+
+
+def test_po_token(url):
+    """Genera un PO Token directamente con el proveedor bgutil (debug).
+    Devuelve un dict con el resultado para exponerlo en /diagnostico."""
+    video_id = extract_video_id(url)
+    providers = _provider_candidates()
+    deno = _find_deno()
+    if not video_id:
+        return {'ok': False, 'motivo': 'url sin video id'}
+    if not providers or not deno:
+        return {'ok': False, 'motivo': 'proveedor o deno no disponible'}
+    provider = providers[0]
+    script = os.path.join(provider, 'src', 'generate_once.ts')
+    node_mods = os.path.join(provider, 'node_modules')
+    cachedir = os.path.join(
+        os.path.expanduser('~'), '.cache', 'bgutil-ytdlp-pot-provider')
+    cmd = [
+        deno, 'run', '--allow-env', '--allow-net',
+        '--allow-ffi=' + node_mods,
+        '--allow-write=' + cachedir,
+        '--allow-read=' + cachedir + ',' + node_mods,
+        script, '-c', video_id,
+    ]
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=90)
+        output = (proc.stdout or '') + (proc.stderr or '')
+    except Exception as exc:
+        return {'ok': False, 'error': str(exc)[:400]}
+    if 'poToken' in output:
+        return {'ok': True, 'salida': output.strip()[-400:]}
+    return {'ok': False, 'salida': output.strip()[-800:]}
 
 
 def extract_video_id(url):
