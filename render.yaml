@@ -11,6 +11,6 @@ services:
       rm -f package-lock.json deno.lock
       /opt/render/project/src/.deno/bin/deno install
       ls -la /opt/render/project/src/bgutil_server/src
-    startCommand: PATH=/opt/render/project/src/.deno/bin:$PATH HOME=/opt/render/project/src gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 180 youtubesubs_app:app
+    startCommand: PATH=/opt/render/project/src/.deno/bin:$PATH XDG_CACHE_HOME=/opt/render/project/src/.cache gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 180 youtubesubs_app:app
     autoDeployTrigger: commit
     healthCheckPath: /

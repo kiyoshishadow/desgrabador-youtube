@@ -72,14 +72,9 @@ def test_po_token(url):
         return {'ok': False, 'motivo': 'proveedor o deno no disponible'}
     provider = providers[0]
     script = os.path.join(provider, 'src', 'generate_once.ts')
-    node_mods = os.path.join(provider, 'node_modules')
-    cachedir = os.path.join(
-        os.path.expanduser('~'), '.cache', 'bgutil-ytdlp-pot-provider')
     cmd = [
         deno, 'run', '--allow-env', '--allow-net',
-        '--allow-ffi=' + node_mods,
-        '--allow-write=' + cachedir,
-        '--allow-read=' + cachedir + ',' + node_mods,
+        '--allow-ffi', '--allow-write', '--allow-read',
         script, '-c', video_id,
     ]
     try:
