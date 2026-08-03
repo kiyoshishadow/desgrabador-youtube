@@ -252,7 +252,7 @@ def _write_cookies_file(directory):
     return path
 
 
-def get_subtitles_ytdlp(url, lang='es', directory=None):
+def get_subtitles_ytdlp(url, lang='es', directory=None, verbose=False):
     """Respaldo: extrae subtitulos con yt-dlp probando varios clientes."""
     ydl_opts = {
         'skip_download': True,
@@ -261,17 +261,11 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
         'writeautomaticsub': True,
         'subtitlesformat': 'vtt',
         'noplaylist': True,
-        # Prueba varios "clientes" de YouTube en orden hasta que uno funcione.
-        # Los clientes web (web, web_safari, mweb, web_embedded) son los unicos
-        # que reciben el PO Token generado por bgutil, asi que van primero.
         'extractor_args': {'youtube': {'player_client': [
             'web', 'web_safari', 'mweb', 'web_embedded',
             'tv', 'android_vr', 'ios',
         ]}},
     }
-    # Si el proveedor de PO Tokens esta disponible, generamos el token
-    # directamente y se lo pasamos a yt-dlp via extractor_args.
-    # Esto bypassa completamente el plugin de yt-dlp y sus problemas de permisos.
     if po_token_available():
         video_id = extract_video_id(url)
         if video_id:
@@ -291,27 +285,35 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
                     f'web_embedded.player+{po}',
                     f'web_embedded.subs+{po}',
                 ]
-    # Si curl_cffi esta instalado, imita a Chrome para evitar HTTP 429.
-    # Si no esta instalado, funciona igual con la extraccion normal.
     if importlib.util.find_spec('curl_cffi') is not None:
         ydl_opts['impersonate'] = ImpersonateTarget(client='chrome')
-
+    if verbose:
+        ydl_opts['verbose'] = True
+        log_buffer = []
+        class _LogCapture(logging.Handler):
+            def emit(self, record):
+                log_buffer.append(self.format(record))
+        cap = _LogCapture()
+        cap.setFormatter(logging.Formatter('%(message)s'))
+        logging.getLogger('yt_dlp').addHandler(cap)
     close_directory = directory is None
     if directory is None:
         directory = tempfile.mkdtemp(prefix='youtube-subs-')
-
     cookies = _write_cookies_file(directory)
     if cookies:
         ydl_opts['cookiefile'] = cookies
-
     try:
         ydl_opts['outtmpl'] = os.path.join(directory, '%(title)s [%(id)s].%(ext)s')
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-
         title = (info or {}).get('title', '')
-        return extract_text_from_vtt(directory, title)
+        result = extract_text_from_vtt(directory, title)
+        if verbose:
+            return result, '\n'.join(log_buffer[-50:])
+        return result
     finally:
+        if verbose:
+            logging.getLogger('yt_dlp').removeHandler(cap)
         if close_directory:
             import shutil
             shutil.rmtree(directory, ignore_errors=True)
