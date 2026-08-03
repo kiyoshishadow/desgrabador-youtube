@@ -1,5 +1,6 @@
 from yt_dlp import YoutubeDL
 from yt_dlp.networking.impersonate import ImpersonateTarget
+import base64
 import glob
 import importlib.util
 import json
@@ -133,7 +134,24 @@ def extract_text_from_vtt(directory, title=''):
     return subtitles
 
 
-def get_subtitles_ytdlp(url, lang='es'):
+def _write_cookies_file(directory):
+    """Si la variable de entorno YT_COOKIES trae un cookies.txt en base64,
+    lo guarda en disco y devuelve la ruta. Nunca se expone a los clientes."""
+    encoded = os.environ.get('YT_COOKIES') or ''
+    if not encoded:
+        return None
+    try:
+        content = base64.b64decode(encoded).decode('utf-8')
+    except Exception:
+        logger.warning('YT_COOKIES no es base64 valido')
+        return None
+    path = os.path.join(directory, 'cookies.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    return path
+
+
+def get_subtitles_ytdlp(url, lang='es', directory=None):
     """Respaldo: extrae subtitulos con yt-dlp probando varios clientes."""
     ydl_opts = {
         'skip_download': True,
@@ -152,27 +170,51 @@ def get_subtitles_ytdlp(url, lang='es'):
     if importlib.util.find_spec('curl_cffi') is not None:
         ydl_opts['impersonate'] = ImpersonateTarget(client='chrome')
 
-    with tempfile.TemporaryDirectory(prefix='youtube-subs-') as directory:
+    close_directory = directory is None
+    if directory is None:
+        directory = tempfile.mkdtemp(prefix='youtube-subs-')
+
+    cookies = _write_cookies_file(directory)
+    if cookies:
+        ydl_opts['cookiefile'] = cookies
+
+    try:
         ydl_opts['outtmpl'] = os.path.join(directory, '%(title)s [%(id)s].%(ext)s')
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
 
         title = (info or {}).get('title', '')
         return extract_text_from_vtt(directory, title)
+    finally:
+        if close_directory:
+            import shutil
+            shutil.rmtree(directory, ignore_errors=True)
 
 
 def get_subtitles(url, lang='es'):
-    """Descarga la transcripcion del video. Prueba primero el endpoint de
-    transcripciones y, si falla, cae en yt-dlp."""
+    """Descarga la transcripcion del video. Si hay cookies configuradas
+    (cuenta descartable), las usa primero; si no, prueba el endpoint de
+    transcripciones y cae en yt-dlp."""
+    has_cookies = bool(os.environ.get('YT_COOKIES'))
+
+    if has_cookies:
+        try:
+            result = get_subtitles_ytdlp(url, lang)
+            if result:
+                return result
+        except Exception as exc:
+            logger.warning('yt-dlp con cookies fallo: %s', exc)
+
     transcript = get_transcript_api(url, lang)
     if transcript:
         return [transcript]
 
-    try:
-        result = get_subtitles_ytdlp(url, lang)
-        if result:
-            return result
-    except Exception as exc:
-        logger.warning('yt-dlp fallo: %s', exc)
+    if not has_cookies:
+        try:
+            result = get_subtitles_ytdlp(url, lang)
+            if result:
+                return result
+        except Exception as exc:
+            logger.warning('yt-dlp fallo: %s', exc)
 
     return []

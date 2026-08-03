@@ -17,6 +17,7 @@ def diagnostico():
         'youtube_transcript_api': False,
         'curl_cffi': False,
         'yt_dlp': False,
+        'cookies_configuradas': bool(os.environ.get('YT_COOKIES')),
     }
     try:
         import youtube_transcript_api
