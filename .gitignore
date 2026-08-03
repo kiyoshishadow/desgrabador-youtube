@@ -6,3 +6,8 @@ tmp/
 
 # Copia local heredada de youtube-dl (el proyecto usa yt-dlp desde PyPI).
 youtube_dl/
+
+# Proveedor de PO Tokens (bgutil): solo se versionan src/ y package.json.
+# node_modules y deno.lock los genera `deno install` en el build.
+bgutil_server/node_modules/
+bgutil_server/deno.lock
