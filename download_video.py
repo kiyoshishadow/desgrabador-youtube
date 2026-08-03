@@ -88,6 +88,37 @@ def test_po_token(url):
     return {'ok': False, 'salida': output.strip()[-800:]}
 
 
+def _generate_po_token(video_id):
+    """Genera un PO Token via el script de bgutil y devuelve el token.
+    Retorna None si falla."""
+    providers = _provider_candidates()
+    deno = _find_deno()
+    if not providers or not deno:
+        return None
+    provider = providers[0]
+    script = os.path.join(provider, 'src', 'generate_once.ts')
+    cmd = [
+        deno, 'run', '--allow-env', '--allow-net',
+        '--allow-ffi', '--allow-write', '--allow-read',
+        script, '-c', video_id,
+    ]
+    try:
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=90)
+        output = (proc.stdout or '') + (proc.stderr or '')
+        for line in reversed(output.strip().splitlines()):
+            try:
+                data = json.loads(line)
+                if 'poToken' in data:
+                    logger.info('PO Token generado para %s', video_id)
+                    return data['poToken']
+            except json.JSONDecodeError:
+                continue
+    except Exception as exc:
+        logger.warning('Fallo al generar PO Token: %s', exc)
+    return None
+
+
 def extract_video_id(url):
     match = re.search(r'(?:v=|youtu\.be/|shorts/|embed/|live/)([\w-]{11})', url)
     return match.group(1) if match else None
@@ -238,14 +269,28 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
             'tv', 'android_vr', 'ios',
         ]}},
     }
-    # Si el proveedor de PO Tokens esta disponible, se lo decimos a yt-dlp
-    # de forma explicita (rutas absolutas, sin depender de HOME ni de PATH).
-    providers = _provider_candidates()
-    deno = _find_deno()
-    if providers and deno:
-        ydl_opts['js_runtimes'] = {'deno': {'path': deno}}
-        ydl_opts['extractor_args']['youtubepot-bgutilscript'] = {
-            'server_home': [providers[0]]}
+    # Si el proveedor de PO Tokens esta disponible, generamos el token
+    # directamente y se lo pasamos a yt-dlp via extractor_args.
+    # Esto bypassa completamente el plugin de yt-dlp y sus problemas de permisos.
+    if po_token_available():
+        video_id = extract_video_id(url)
+        if video_id:
+            po = _generate_po_token(video_id)
+            if po:
+                ydl_opts['extractor_args']['youtube']['po_token'] = [
+                    f'web.gvs+{po}',
+                    f'web.player+{po}',
+                    f'web.subs+{po}',
+                    f'web_safari.gvs+{po}',
+                    f'web_safari.player+{po}',
+                    f'web_safari.subs+{po}',
+                    f'mweb.gvs+{po}',
+                    f'mweb.player+{po}',
+                    f'mweb.subs+{po}',
+                    f'web_embedded.gvs+{po}',
+                    f'web_embedded.player+{po}',
+                    f'web_embedded.subs+{po}',
+                ]
     # Si curl_cffi esta instalado, imita a Chrome para evitar HTTP 429.
     # Si no esta instalado, funciona igual con la extraccion normal.
     if importlib.util.find_spec('curl_cffi') is not None:
