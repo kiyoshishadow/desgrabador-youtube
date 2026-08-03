@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import tempfile
 import urllib.request
 
@@ -16,6 +17,27 @@ _HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
     'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
 }
+
+_po_available = None
+
+
+def po_token_available():
+    """True si el proveedor de PO Tokens (bgutil + Deno) esta instalado.
+    Es lo que permite esquivar el 'Sign in to confirm you're not a bot'
+    que YouTube aplica a IPs de datacenter como las de Render."""
+    global _po_available
+    if _po_available is None:
+        _po_available = False
+        try:
+            deno = shutil.which('deno')
+            script = os.path.join(
+                os.path.expanduser('~'), 'bgutil-ytdlp-pot-provider',
+                'server', 'src', 'generate_once.ts')
+            _po_available = bool(deno) and os.path.isfile(script)
+        except Exception:
+            _po_available = False
+        logger.debug('PO token provider disponible: %s', _po_available)
+    return _po_available
 
 
 def extract_video_id(url):
@@ -161,8 +183,11 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
         'subtitlesformat': 'vtt',
         'noplaylist': True,
         # Prueba varios "clientes" de YouTube en orden hasta que uno funcione.
+        # Los clientes web (web, web_safari, mweb, web_embedded) son los unicos
+        # que reciben el PO Token generado por bgutil, asi que van primero.
         'extractor_args': {'youtube': {'player_client': [
-            'tv', 'web_safari', 'android_vr', 'mweb', 'ios', 'web_embedded',
+            'web', 'web_safari', 'mweb', 'web_embedded',
+            'tv', 'android_vr', 'ios',
         ]}},
     }
     # Si curl_cffi esta instalado, imita a Chrome para evitar HTTP 429.
@@ -192,9 +217,12 @@ def get_subtitles_ytdlp(url, lang='es', directory=None):
 
 
 def get_subtitles(url, lang='es'):
-    """Descarga la transcripcion del video. Si hay cookies configuradas
-    (cuenta descartable), las usa primero; si no, prueba el endpoint de
-    transcripciones y cae en yt-dlp."""
+    """Descarga la transcripcion del video. Orden de intentos:
+    1. Si hay cookies (cuenta descartable), yt-dlp con cookies.
+    2. Si el proveedor de PO Tokens esta disponible, yt-dlp (lo que
+       esquiva el bloqueo de IPs de datacenter como las de Render).
+    3. Endpoint de transcripciones (ligero, sin API de player).
+    4. yt-dlp sin PO (ultimo recurso)."""
     has_cookies = bool(os.environ.get('YT_COOKIES'))
 
     if has_cookies:
@@ -205,11 +233,19 @@ def get_subtitles(url, lang='es'):
         except Exception as exc:
             logger.warning('yt-dlp con cookies fallo: %s', exc)
 
+    if po_token_available():
+        try:
+            result = get_subtitles_ytdlp(url, lang)
+            if result:
+                return result
+        except Exception as exc:
+            logger.warning('yt-dlp con PO token fallo: %s', exc)
+
     transcript = get_transcript_api(url, lang)
     if transcript:
         return [transcript]
 
-    if not has_cookies:
+    if not has_cookies and not po_token_available():
         try:
             result = get_subtitles_ytdlp(url, lang)
             if result:

@@ -17,6 +17,7 @@ def diagnostico():
         'youtube_transcript_api': False,
         'curl_cffi': False,
         'yt_dlp': False,
+        'po_token_provider': download_video.po_token_available(),
         'cookies_configuradas': bool(os.environ.get('YT_COOKIES')),
     }
     try:
@@ -37,15 +38,12 @@ def diagnostico():
 
     url = request.args.get('url')
     if url:
-        transcript = download_video.get_transcript_api(url)
-        info['transcript_api_ok'] = bool(transcript)
-        info['transcript_frases'] = len(transcript['text_with_stamps']) if transcript else 0
-        if not transcript:
-            try:
-                download_video.get_subtitles_ytdlp(url)
-                info['ytdlp_ok'] = True
-            except Exception as exc:
-                info['ytdlp_error'] = type(exc).__name__ + ': ' + str(exc)[:200]
+        try:
+            result = download_video.get_subtitles(url)
+            info['subtitles_ok'] = bool(result)
+            info['subtitles_frases'] = len(result[0]['text_with_stamps']) if result else 0
+        except Exception as exc:
+            info['subtitles_error'] = type(exc).__name__ + ': ' + str(exc)[:300]
     return jsonify(info)
 
 
