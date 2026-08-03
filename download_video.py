@@ -309,8 +309,13 @@ def get_subtitles_ytdlp(url, lang='es', directory=None, verbose=False):
         title = (info or {}).get('title', '')
         result = extract_text_from_vtt(directory, title)
         if verbose:
-            return result, '\n'.join(log_buffer[-50:])
+            return result, '\n'.join(log_buffer[-80:])
         return result
+    except Exception as exc:
+        if verbose:
+            log_buffer.append(f'EXCEPTION: {type(exc).__name__}: {exc}')
+            return None, '\n'.join(log_buffer[-80:])
+        raise
     finally:
         if verbose:
             logging.getLogger('yt_dlp').removeHandler(cap)
